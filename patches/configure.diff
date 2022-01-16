@@ -1,0 +1,22 @@
+--- a/configure
++++ b/configure
+@@ -1558,6 +1558,8 @@ for opt do
+   ;;
+   --disable-fuse-lseek) fuse_lseek="disabled"
+   ;;
++  --enable-sysmode-fuzzer) sysmode_fuzzer="enabled"
++  ;;
+   *)
+       echo "ERROR: unknown option $opt"
+       echo "Try '$0 --help' for more information"
+@@ -6234,6 +6236,10 @@ if test "$fuzzing" != "no"; then
+ fi
+ echo "FUZZ_EXE_LDFLAGS=$FUZZ_EXE_LDFLAGS" >> $config_host_mak
+
++if test "$sysmode_fuzzer" = "enabled"; then
++    echo "CONFIG_SYSMODE_FUZZER=y" >> $config_host_mak
++fi
++
+ if test "$rng_none" = "yes"; then
+   echo "CONFIG_RNG_NONE=y" >> $config_host_mak
+ fi

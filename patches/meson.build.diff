@@ -1,0 +1,37 @@
+--- a/meson.build
++++ b/meson.build
+@@ -1660,6 +1660,7 @@ qmp_ss = ss.source_set()
+ qom_ss = ss.source_set()
+ softmmu_ss = ss.source_set()
+ specific_fuzz_ss = ss.source_set()
++sysmode_fuzzer_ss = ss.source_set()
+ specific_ss = ss.source_set()
+ stub_ss = ss.source_set()
+ trace_ss = ss.source_set()
+@@ -1840,6 +1841,7 @@ softmmu_ss.add(when: 'CONFIG_WIN32', if_true: [files('os-win32.c')])
+
+ common_ss.add(files('cpus-common.c'))
+
++subdir('sysmode-fuzzer')
+ subdir('softmmu')
+
+ common_ss.add(capstone)
+@@ -2103,6 +2105,10 @@ foreach target : target_dirs
+   arch_srcs += target_specific.sources()
+   arch_deps += target_specific.dependencies()
+
++  sysmode_fuzzer_specific = sysmode_fuzzer_ss.apply(config_target, strict: false)
++  arch_srcs += sysmode_fuzzer_specific.sources()
++  arch_deps += sysmode_fuzzer_specific.dependencies()
++
+   lib = static_library('qemu-' + target,
+                  sources: arch_srcs + genh,
+                  dependencies: arch_deps,
+@@ -2413,6 +2419,7 @@ if config_all.has_key('CONFIG_TCG')
+   summary_info += {'TCG debug enabled': config_host.has_key('CONFIG_DEBUG_TCG')}
+   summary_info += {'TCG interpreter':   config_host.has_key('CONFIG_TCG_INTERPRETER')}
+ endif
++summary_info += {'System-mode fuzzing support': config_all.has_key('CONFIG_SYSMODE_FUZZER')}
+ summary_info += {'malloc trim support': has_malloc_trim}
+ summary_info += {'RDMA support':      config_host.has_key('CONFIG_RDMA')}
+ summary_info += {'PVRDMA support':    config_host.has_key('CONFIG_PVRDMA')}

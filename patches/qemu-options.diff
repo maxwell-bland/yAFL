@@ -1,0 +1,57 @@
+--- a/qemu-options.hx
++++ b/qemu-options.hx
+@@ -5155,4 +5155,54 @@ SRST
+ ERST
+
+
++DEFHEADING()
++
++DEFHEADING(System Mode Fuzzing:)
++
++DEF("fuzzer-syncdir", HAS_ARG, QEMU_OPTION_sm_syncdir,
++    "-fuzzer-syncdir path\n"
++    "                Specify the path of the syncronization directory to use.\n"
++    , QEMU_ARCH_ALL)
++SRST
++``-fuzzer-syncdir path``
++    Specify the path of the syncronization directory to use. This is where stdout,
++    stderr will be written as well as where the fuzzer input will be read from,
++    with respect to the fuzzer name argument given; should include the fuzzer's
++    name in the path.
++ERST
++
++DEF("fuzzer-checkpoint-dir", HAS_ARG, QEMU_OPTION_sm_fuzzer_checkpoint_dir,
++    "-fuzzer-checkpoint-dir name\n"
++    "                Specify the location at which to store criu checkpoints.\n",
++    QEMU_ARCH_ALL)
++SRST
++``-fuzzer-checkpoint-dir name``
++    Specify the location at which to store criu checkpoints and other state files
++    that are used at each fuzzing run. This is ideally located in a RAM-mounted
++    file system.
++ERST
++
++DEF("fuzzer-state-files", HAS_ARG, QEMU_OPTION_sm_fuzzer_criu_external_state_files,
++    "-fuzzer-state-files file1[,...]\n"
++    "                Specifies paths of files to restore each time the child\n"
++    "                process of the fuzzer is rebooted.\n", QEMU_ARCH_ALL)
++SRST
++``-fuzzer-state-files file1[,...]``
++    Specifies paths of files to restore each time the child is rebooted. This
++    is useful for storing the state of the QEMU process's flash memory and
++    other assets of the QEMU process's state that should be restored at each
++    run of the fuzzer.
++ERST
++
++DEF("fuzzer-validate-input", 0, QEMU_OPTION_sm_fuzzer_validating_input,
++    "-fuzzer-validate-input\n"
++    "                Runs qemu with just the fuzzer instrumentation for\n"
++    "                reading fuzzer inputs from stdin.\n", QEMU_ARCH_ALL)
++SRST
++``-fuzzer-validate-input``
++    Runs the fuzzer where fuzzer inputs are read from stdin. This is useful
++    for validating a testcase from an earlier fuzzing run. It disables
++    recording of basic blocks executed and any checkpointing functionality.
++ERST
++
+ HXCOMM This is the last statement. Insert new options before this line!

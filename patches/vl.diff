@@ -1,0 +1,36 @@
+--- a/softmmu/vl.c
++++ b/softmmu/vl.c
+@@ -155,6 +155,12 @@ static bool list_data_dirs;
+ static const char *watchdog;
+ static const char *qtest_chrdev;
+ static const char *qtest_log;
++#ifdef CONFIG_SYSMODE_FUZZER
++const char *sm_syncdir = 0;
++const char *sm_fuzzer_checkpoint_dir = 0;
++const char *sm_fuzzer_criu_external_state_files = 0;
++bool sm_fuzzer_validating_input = false;
++#endif
+
+ static int has_defaults = 1;
+ static int default_serial = 1;
+@@ -3432,6 +3438,20 @@ void qemu_init(int argc, char **argv, char **envp)
+             case QEMU_OPTION_nouserconfig:
+                 /* Nothing to be parsed here. Especially, do not error out below. */
+                 break;
++#ifdef CONFIG_SYSMODE_FUZZER
++            case QEMU_OPTION_sm_syncdir:
++                sm_syncdir = optarg;
++                break;
++            case QEMU_OPTION_sm_fuzzer_checkpoint_dir:
++                sm_fuzzer_checkpoint_dir = optarg;
++                break;
++            case QEMU_OPTION_sm_fuzzer_criu_external_state_files:
++                sm_fuzzer_criu_external_state_files = optarg;
++                break;
++            case QEMU_OPTION_sm_fuzzer_validating_input:
++                sm_fuzzer_validating_input = true;
++                break;
++#endif
+             default:
+                 if (os_parse_cmd_args(popt->index, optarg)) {
+                     error_report("Option not supported in this build");

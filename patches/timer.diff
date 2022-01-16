@@ -1,0 +1,28 @@
+--- a/include/qemu/timer.h
++++ b/include/qemu/timer.h
+@@ -4,6 +4,9 @@
+ #include "qemu/bitops.h"
+ #include "qemu/notify.h"
+ #include "qemu/host-utils.h"
++#ifdef CONFIG_SYSMODE_FUZZER
++#include "sysmode-fuzzer/time-dialation.h"
++#endif
+
+ #define NANOSECONDS_PER_SECOND 1000000000LL
+
+@@ -799,6 +802,7 @@ static inline int64_t get_max_clock_jump(void)
+  * Low level clock functions
+  */
+
++#ifndef CONFIG_SYSMODE_FUZZER
+ /* get host real time in nanosecond */
+ static inline int64_t get_clock_realtime(void)
+ {
+@@ -840,6 +844,7 @@ static inline int64_t get_clock(void)
+     }
+ }
+ #endif
++#endif
+
+ /*******************************************/
+ /* host CPU ticks (if available) */
