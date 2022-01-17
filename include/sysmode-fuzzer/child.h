@@ -49,4 +49,7 @@ void sm_fuzzer_log(ulong cur_loc);
    of bytes of input */
 void sm_fuzzer_fuzz(uint8_t *dest, int num_bytes);
 
+/* Returns whether the fuzzer is done with a checkpoint */
+bool sm_fuzzer_checkpoint_done(void);
+
 #endif

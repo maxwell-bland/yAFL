@@ -101,7 +101,12 @@ restoring the state.
 
 *DO NOT* include -serial flags pointing to `/dev/` or similar, since CRIU cannot restore this 
 type of file descriptor. You should instead modify your serial devices to print to stdout or 
-stderr, or introspect the state using qemu.
+stderr, or introspect the state using qemu. Or point them towards the `stdout` and `stderr` 
+recorded in the syncdir like so:
+
+```
+-serial file:{path to syncdir}/{fuzzer name}/stdout
+```
 
 ### Running the Fuzzer
 

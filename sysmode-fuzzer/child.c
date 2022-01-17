@@ -232,3 +232,7 @@ void sm_fuzzer_fuzz(uint8_t *dest, int num_bytes) {
         }
     }
 }
+
+bool sm_fuzzer_checkpoint_done(void) {
+    return checkpoint_done;
+}
