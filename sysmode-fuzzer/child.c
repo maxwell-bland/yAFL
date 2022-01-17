@@ -68,7 +68,7 @@ void restore_file_state(void) {
 
             // Copy the file
             sprintf(copy_str, "cp %s%s %s", sm_fuzzer_checkpoint_dir, basename, pt);
-            if (!system(copy_str)) {
+            if (system(copy_str)) {
                 fprintf(stderr, "Child failed to restore file state %s\n",
                         strerror(errno));
             }
@@ -98,7 +98,7 @@ void save_file_state(void) {
             }
 
             sprintf(copy_str, "cp %s %s", pt, sm_fuzzer_checkpoint_dir);
-            if (!system(copy_str)) {
+            if (system(copy_str)) {
                 fprintf(stderr, "Child failed to copy file state %s\n",
                         strerror(errno));
             }
