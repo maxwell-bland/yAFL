@@ -33,7 +33,7 @@ bool validation_input_redirected = false;
 
 void restore_file_state(void) {
     if (sm_fuzzer_criu_external_state_files) {
-        char copy_str[4098];
+        char copy_str[16384];
         char filename[4098] = {0};
         char tmp[4098] = {0};
 
@@ -80,7 +80,7 @@ void restore_file_state(void) {
 
 void save_file_state(void) {
     if (sm_fuzzer_criu_external_state_files) {
-        char copy_str[4098];
+        char copy_str[16384];
         char filename[4098] = {0};
 
         char *pt = filename;
