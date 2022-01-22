@@ -169,13 +169,17 @@ inline void checkpoint_internal(void) {
     checkpoint_done = true;
     criu_init_opts();
     criu_set_log_level(4);
+    criu_set_file_locks(true);
     int fd = open(sm_fuzzer_checkpoint_dir, O_DIRECTORY);
     criu_set_images_dir_fd(fd);
     criu_set_log_file("dump.log");
     close(0);
     close(1);
     close(2);
-    criu_dump();
+    if (criu_dump()) {
+        fprintf(stderr, "CRIU Checkpoint Failed. Please check dump.log. %s\n",
+                strerror(errno));
+    }
 }
 
 inline void sm_fuzzer_checkpoint(CPUState *cpu) {

@@ -103,7 +103,7 @@ pid_t create_child(const char *checkpoint_dir) {
     pid_t pid = fork();
     if (!pid) {
 	    while (system(criu_restore_cmd)) {
-		while (system("pgrep 'criu restore' >/dev/null")) {}
+               wait_for_children();
 	    }
 	    exit(0);
     }
@@ -124,7 +124,7 @@ int main(int argc, char **argv) {
     create_shm(argv[2]);
     create_child_pipe();
     sprintf(child_wait_cmd, "ps -aef | awk '$3==%u {print $2}'", getpid());
-    sprintf(criu_restore_cmd, "criu restore -D %s -v4 -o restore.log", argv[2]);
+    sprintf(criu_restore_cmd, "criu restore -d -S -D %s -v4 -o restore.log", argv[2]);
 
     /* Tell the parent AFL Process we are alive */
     send_afl_data((uint8_t *) "here");
