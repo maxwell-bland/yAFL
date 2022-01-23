@@ -2,6 +2,7 @@
 #include <criu/criu.h>
 #include <sys/shm.h> 
 #include "qemu/osdep.h"
+#include "sysemu/cpus.h"
 #include "sysemu/runstate.h"
 #include "sysmode-fuzzer/time-dialation.h"
 #include "sysmode-fuzzer/child.h"
@@ -28,6 +29,8 @@ static unsigned int afl_inst_rms = AFL_MAP_SIZE;
 
 /* Whether the child has already finished checkpointing. */
 bool checkpoint_done = false;
+/* Whether the child has hit a fuzzer input */
+bool pid_sent_to_parent = false;
 /* Whether we have redirected output when validating fuzzing testcases */
 bool validation_input_redirected = false;
 
@@ -135,35 +138,45 @@ inline void restore_io(void) {
 }
 
 inline void send_parent_pid(void) {
-    char tmp[1024];
-    pid_t ppid;
-    sprintf(tmp, "%s/parent_pid", sm_syncdir);
-    FILE *pid_file = fopen(tmp, "r");
-    if (!fread(&ppid, sizeof(pid_t), 1, pid_file)) {
-        fprintf(stderr, "Child read parent PID. %s\n",
-                strerror(errno));
-        exit(5);
-    }
-    fclose(pid_file);
+    if (!pid_sent_to_parent) {
+        char tmp[1024];
+        pid_t ppid;
+        sprintf(tmp, "%s/parent_pid", sm_syncdir);
+        FILE *pid_file = fopen(tmp, "r");
+        if (!fread(&ppid, sizeof(pid_t), 1, pid_file)) {
+            fprintf(stderr, "Child read parent PID. %s\n",
+                    strerror(errno));
+            exit(5);
+        }
+        fclose(pid_file);
 
-    sprintf(tmp, "/proc/%d/fd/%d", ppid, PARENT_IN_FD);
-    int comm_channel = open(tmp, O_WRONLY);
-    int my_pid = getpid();
-    if (write(comm_channel, &my_pid, 4) != 4) {
-        fprintf(stderr, "Child failed to write PID to parent. %s\n",
-                strerror(errno));
-        exit(5);
+        sprintf(tmp, "/proc/%d/fd/%d", ppid, PARENT_IN_FD);
+        int comm_channel = open(tmp, O_WRONLY);
+        int my_pid = getpid();
+        if (write(comm_channel, &my_pid, 4) != 4) {
+            fprintf(stderr, "Child failed to write PID to parent. %s\n",
+                    strerror(errno));
+            exit(5);
+        }
+        close(comm_channel);
+        pid_sent_to_parent = true;
     }
-    close(comm_channel);
 }
 
-inline void restore_child(CPUState *cpu) {
+inline void restore_child(void) {
     restore_io();
     restore_shm();
-    send_parent_pid();
+    restore_file_state();
+    set_criu_restore_time();
+    vm_start();
 }
 
 inline void checkpoint_internal(void) {
+    set_criu_checkpoint_time();
+    qemu_system_vmstop_request_prepare();
+    qemu_system_vmstop_request(RUN_STATE_PAUSED);
+    cpu_stop_current();
+    save_file_state();
     /* We set a new session ID to avoid conflicting with prior runs */
     setsid();
     checkpoint_done = true;
@@ -182,17 +195,11 @@ inline void checkpoint_internal(void) {
     }
 }
 
-inline void sm_fuzzer_checkpoint(CPUState *cpu) {
+inline void sm_fuzzer_checkpoint(void) {
     if (!sm_fuzzer_validating_input && !checkpoint_done) {
-        set_criu_checkpoint_time();
-        vm_stop(4);
-        save_file_state();
         checkpoint_internal();
         /* Child will start here. */
-        restore_child(cpu);
-        restore_file_state();
-        vm_start();
-        set_criu_restore_time();
+        restore_child();
     } else if (sm_fuzzer_validating_input && !checkpoint_done){
         checkpoint_done = 1;
     }
@@ -219,22 +226,24 @@ inline void sm_fuzzer_log(ulong cur_loc) {
 }
 
 void sm_fuzzer_fuzz(uint8_t *dest, int num_bytes) {
-    if (checkpoint_done) {
-        if (sm_fuzzer_validating_input && !validation_input_redirected) {
-            fclose(stdin);
-            stdin = fopen("/dev/stdin", "r");
-            validation_input_redirected = true;
-        }
-        uint8_t res[num_bytes];
-        int cnt = fread(res, 1, num_bytes, stdin);
-        for (int i = 0; i < num_bytes; i++) {
-            if (cnt != 0) {
-                *dest = res[i];
-                dest++;
-                cnt--;
-            }
-        }
+    sm_fuzzer_checkpoint();
+    if (sm_fuzzer_validating_input && !validation_input_redirected) {
+        fclose(stdin);
+        stdin = fopen("/dev/stdin", "r");
+        validation_input_redirected = true;
     }
+    uint8_t res[num_bytes];
+    int cnt = fread(res, num_bytes, 1, stdin);
+    for (int i = 0; i < num_bytes; i++) {
+        if (cnt != 0) {
+            *dest = res[i];
+            cnt--;
+        } else {
+            *dest = 0;
+        }
+        dest++;
+    }
+    send_parent_pid();
 }
 
 bool sm_fuzzer_checkpoint_done(void) {

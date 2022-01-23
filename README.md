@@ -58,21 +58,21 @@ To use the fuzzer, we introduce four stages.
 
 ### Specifying Inputs
 
-The fuzzer API provides two methods: one for checkpointing the qemu instance and one for supplying 
-input to QEMU's state. To access these methods you will need to 
+The fuzzer API provides a single method: this checkpoints the qemu instance if it has not 
+yet been checkpointed and supplies input to QEMU's state. It can be called multiple times 
+to supply input multiple times. However, at the end of the first call, it signals to QEMU 
+to start the time by sending the parent it's PID. This is easy to reconfigure if desired,
+just move the call to that method to suit your needs.
+
+To access these methods you will need to:
 
 ```
 #include "sysmode-fuzzer/child.h"
 ```
 
-At the top of the file where you would like to checkpoint or fuzz from. Then, the two calls are:
+At the top of the file where you would like to checkpoint or fuzz from. Then, the call is:
 
 ```
-/* Checkpoints the qemu process by stopping the vm
-   and recording proper file state based on command-line
-   flags */
-void sm_fuzzer_checkpoint(CPUState *cpu);
-
 /* Fuzzes the destination pointer with a given number
    of bytes of input */
 void sm_fuzzer_fuzz(uint8_t *dest, int num_bytes);
