@@ -1,5 +1,5 @@
---- a/include/qemu/timer.h
-+++ b/include/qemu/timer.h
+--- a/include/qemu/timer.h        2022-05-31 14:48:30.687026318 -0500
++++ b/include/qemu/timer.h    2022-05-31 15:45:39.784464685 -0500
 @@ -4,6 +4,9 @@
  #include "qemu/bitops.h"
  #include "qemu/notify.h"
@@ -10,15 +10,25 @@
 
  #define NANOSECONDS_PER_SECOND 1000000000LL
 
-@@ -799,6 +802,7 @@ static inline int64_t get_max_clock_jump(void)
+@@ -800,7 +803,9 @@
+ /*
   * Low level clock functions
   */
++extern int64_t clock_start;
 
 +#ifndef CONFIG_SYSMODE_FUZZER
  /* get host real time in nanosecond */
  static inline int64_t get_clock_realtime(void)
  {
-@@ -840,6 +844,7 @@ static inline int64_t get_clock(void)
+@@ -810,7 +815,6 @@
+     return tv.tv_sec * 1000000000LL + (tv.tv_usec * 1000);
+ }
+
+-extern int64_t clock_start;
+
+ /* Warning: don't insert tracepoints into these functions, they are
+    also used by simpletrace backend and tracepoints would cause
+@@ -842,6 +846,7 @@
      }
  }
  #endif

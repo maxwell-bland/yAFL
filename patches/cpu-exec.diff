@@ -15,7 +15,6 @@
      const void *tb_ptr = itb->tc.ptr;
 
 +#ifdef CONFIG_SYSMODE_FUZZER
-+    sm_fuzzer_checkpoint(cpu);
 +    sm_fuzzer_log(itb->pc);
 +#endif
 +
